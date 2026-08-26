@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.pyc
+*.docx
+*.json
+!scripts/*.py
+.DS_Store
