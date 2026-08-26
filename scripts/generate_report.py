@@ -167,6 +167,57 @@ def add_row_to(table, ncols):
     return [row.cells[c] for c in range(ncols)]
 
 
+def add_code_block(doc, code, label=None):
+    """Render a monospace, shaded code block (for copy-paste snippets)."""
+    if label:
+        lp = doc.add_paragraph()
+        lr = lp.add_run(label)
+        style_run(lr, 10, bold=True, color=ACCENT)
+    box = doc.add_table(rows=1, cols=1)
+    box.style = "Table Grid"
+    c = box.rows[0].cells[0]
+    shade(c, "F4F6F8")
+    set_cell_margins(c, top=120, bottom=120, left=160, right=160)
+    c.text = ""
+    first = True
+    for line in code.strip("\n").split("\n"):
+        p = c.paragraphs[0] if first else c.add_paragraph()
+        first = False
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.space_before = Pt(0)
+        r = p.add_run(line if line else " ")
+        r.font.name = "Courier New"
+        r.font.size = Pt(9)
+        r.font.color.rgb = DARK
+    doc.add_paragraph()
+
+
+def add_fixit_section(doc, fixit):
+    """Render the 'How to Fix' appendix from DATA['fixit'] (list of
+    {title, label?, code} dicts)."""
+    add_heading(doc, "How to Fix (copy-paste)", 1)
+    for item in fixit:
+        add_heading(doc, item.get("title", "Snippet"), 2)
+        add_code_block(doc, item["code"], label=item.get("label"))
+
+
+def add_aeo_section(doc, aeo):
+    """Render an AEO before/after example block."""
+    RED = RGBColor(0xDC, 0x26, 0x26)
+    GREEN = RGBColor(0x16, 0xA3, 0x4A)
+    add_heading(doc, "AEO Before / After Example", 1)
+    for ex in aeo:
+        add_heading(doc, ex.get("page", "Example"), 2)
+        p = doc.add_paragraph()
+        r = p.add_run("BEFORE — declarative heading, no direct answer:")
+        style_run(r, 10, bold=True, color=RED)
+        add_code_block(doc, ex.get("before", ""))
+        p = doc.add_paragraph()
+        r = p.add_run("AFTER — question heading + 40-60 word direct answer + FAQ schema:")
+        style_run(r, 10, bold=True, color=GREEN)
+        add_code_block(doc, ex.get("after", ""))
+
+
 # ---------------------------------------------------------------------------
 # Validation + loading
 # ---------------------------------------------------------------------------
@@ -182,6 +233,8 @@ def validate(data):
     for key in ("seo", "geo", "aeo", "pages_audited", "recommendations", "strengths"):
         if not isinstance(data[key], list):
             raise ValueError(f"'{key}' must be a list")
+    # optional keys (no schema enforcement beyond presence):
+    #   takeaways, health_score, glossary, fixit, aeo_example
     return data
 
 
@@ -531,6 +584,12 @@ def build_document(DATA):
             style_run(r, 11, bold=True, color=NAVY)
             r2 = p.add_run(desc)
             style_run(r2, 11, color=DARK)
+
+    # ---- 10. How to Fix (copy-paste) + AEO before/after ----
+    if DATA.get("fixit"):
+        add_fixit_section(doc, DATA["fixit"])
+    if DATA.get("aeo_example"):
+        add_aeo_section(doc, DATA["aeo_example"])
 
     domain_hyphen = DATA["domain"].replace(".", "-")
     out = f"seo-audit-{domain_hyphen}-{DATA['date']}.docx"
