@@ -1,7 +1,9 @@
 # Python
 __pycache__/
 *.pyc
-*.docx
 *.json
 !scripts/*.py
 .DS_Store
+
+# Allow the sample audit report (demonstrates generator output)
+!sample-audit-pathosbay.docx
