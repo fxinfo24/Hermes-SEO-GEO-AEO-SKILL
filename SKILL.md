@@ -310,3 +310,12 @@ problems. If serious, communicate urgency without alarmism.
 unfamiliar.
 
 **Make the report earn its download.** The DOCX should feel agency-grade.
+
+**Never report on a broken crawl.** If the homepage returns HTTP 500 (WordPress
+fatal) or a 200 with a 0-byte body, DO NOT generate the audit. A report on a down
+page is false data — hold, tell the user the site is erroring, and only regenerate
+once pages return 200.
+
+**References:** `references/cloudflare-wordpress-edge-fixes.md` — Free-plan security
+headers via `.htaccess`, killing the PHP `X-Powered-By` leak via `.user.ini` in the
+correct docroot, robots.txt Cloudflare-cache purge, and MCP execution reality checks.
